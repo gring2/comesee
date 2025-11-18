@@ -185,41 +185,56 @@ class _PhotoAccessPageState extends State<PhotoAccessPage> {
         itemCount: _photos.length,
         itemBuilder: (context, index) {
           final asset = _photos[index];
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                FutureBuilder<Uint8List?>(
-                  future: asset.thumbnailDataWithSize(
-                    const ThumbnailSize(360, 360),
+          return GestureDetector(
+            onTap: () => _openViewer(index),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  FutureBuilder<Uint8List?>(
+                    future: asset.thumbnailDataWithSize(
+                      const ThumbnailSize(360, 360),
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const ColoredBox(
+                          color: Color(0x11000000),
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 1.5),
+                          ),
+                        );
+                      }
+                      final bytes = snapshot.data;
+                      if (bytes == null || bytes.isEmpty) {
+                        return const ColoredBox(color: Colors.black12);
+                      }
+                      return Image.memory(bytes, fit: BoxFit.cover);
+                    },
                   ),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const ColoredBox(
-                        color: Color(0x11000000),
-                        child: Center(
-                          child: CircularProgressIndicator(strokeWidth: 1.5),
-                        ),
-                      );
-                    }
-                    final bytes = snapshot.data;
-                    if (bytes == null || bytes.isEmpty) {
-                      return const ColoredBox(color: Colors.black12);
-                    }
-                    return Image.memory(bytes, fit: BoxFit.cover);
-                  },
-                ),
-                if (asset.isFavorite)
-                  const Positioned(
-                    right: 4,
-                    top: 4,
-                    child: Icon(Icons.favorite, color: Colors.white, size: 16),
-                  ),
-              ],
+                  if (asset.isFavorite)
+                    const Positioned(
+                      right: 4,
+                      top: 4,
+                      child: Icon(
+                        Icons.favorite,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _openViewer(int index) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PhotoViewerPage(photos: _photos, initialIndex: index),
       ),
     );
   }
@@ -280,6 +295,82 @@ class _PhotoAccessPageState extends State<PhotoAccessPage> {
               Expanded(child: _buildGrid()),
             ],
           ),
+        },
+      ),
+    );
+  }
+}
+
+class PhotoViewerPage extends StatefulWidget {
+  const PhotoViewerPage({
+    super.key,
+    required this.photos,
+    required this.initialIndex,
+  });
+
+  final List<AssetEntity> photos;
+  final int initialIndex;
+
+  @override
+  State<PhotoViewerPage> createState() => _PhotoViewerPageState();
+}
+
+class _PhotoViewerPageState extends State<PhotoViewerPage> {
+  late final PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('Photo ${_currentIndex + 1} / ${widget.photos.length}'),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (i) => setState(() => _currentIndex = i),
+        itemCount: widget.photos.length,
+        itemBuilder: (context, index) {
+          final asset = widget.photos[index];
+          return FutureBuilder<Uint8List?>(
+            future: asset.thumbnailDataWithSize(
+              const ThumbnailSize.square(2000),
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              }
+              final bytes = snapshot.data;
+              if (bytes == null || bytes.isEmpty) {
+                return const Center(
+                  child: Text(
+                    '이미지를 불러올 수 없습니다',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                );
+              }
+              return InteractiveViewer(
+                child: Center(child: Image.memory(bytes, fit: BoxFit.contain)),
+              );
+            },
+          );
         },
       ),
     );
