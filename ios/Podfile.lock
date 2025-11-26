@@ -8,6 +8,9 @@ PODS:
   - photo_manager (3.7.1):
     - Flutter
     - FlutterMacOS
+  - shared_preferences_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - SwiftyJSON (4.3.0)
 
 DEPENDENCIES:
@@ -15,6 +18,7 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_nearby_connections (from `.symlinks/plugins/flutter_nearby_connections/ios`)
   - photo_manager (from `.symlinks/plugins/photo_manager/ios`)
+  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
 
 SPEC REPOS:
   trunk:
@@ -29,12 +33,15 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_nearby_connections/ios"
   photo_manager:
     :path: ".symlinks/plugins/photo_manager/ios"
+  shared_preferences_foundation:
+    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
 
 SPEC CHECKSUMS:
   device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_nearby_connections: 1c977358b344997fe3b52f97be62f7a238e1dbf0
   photo_manager: 1d80ae07a89a67dfbcae95953a1e5a24af7c3e62
+  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   SwiftyJSON: 6faa0040f8b59dead0ee07436cbf76b73c08fd08
 
 PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e

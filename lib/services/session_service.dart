@@ -140,7 +140,7 @@ class SessionService extends ChangeNotifier {
     });
   }
 
-  Future<String> _getDeviceName() async {
+  Future<String> getDeviceName() async {
     final deviceInfo = DeviceInfoPlugin();
     if (defaultTargetPlatform == TargetPlatform.android) {
       final androidInfo = await deviceInfo.androidInfo;
@@ -152,8 +152,8 @@ class SessionService extends ChangeNotifier {
     return 'Flutter Device';
   }
 
-  Future<void> startHost() async {
-    final deviceName = await _getDeviceName();
+  Future<void> startHost({String? name}) async {
+    final deviceName = name ?? await getDeviceName();
     final sessionId = const Uuid().v4();
     _session = Session(
       id: sessionId,
@@ -165,8 +165,8 @@ class SessionService extends ChangeNotifier {
     await _transport.startAdvertising(deviceName, 'P2P_CLUSTER');
   }
 
-  Future<void> startGuest() async {
-    final deviceName = await _getDeviceName();
+  Future<void> startGuest({String? name}) async {
+    final deviceName = name ?? await getDeviceName();
     _session = _session.copyWith(
       state: SessionState.discovering,
       isHost: false,
