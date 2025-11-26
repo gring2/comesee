@@ -62,6 +62,8 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
     final sessionService = context.watch<SessionService>();
     final isHost = sessionService.session.isHost;
     final isBufferActive = sessionService.isBufferActive;
+    final showSharedConfirmation = sessionService.showSharedConfirmation;
+    final remainingSeconds = sessionService.bufferSecondsRemaining;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -92,34 +94,10 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
             },
             itemCount: widget.photos.length,
             itemBuilder: (context, index) {
-              final asset = widget.photos[index];
-              return FutureBuilder<Uint8List?>(
-                future: asset.thumbnailDataWithSize(
-                  const ThumbnailSize.square(2000),
-                ),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    );
-                  }
-                  final bytes = snapshot.data;
-                  if (bytes == null || bytes.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        '이미지를 불러올 수 없습니다',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    );
-                  }
-                  return InteractiveViewer(
-                    child: Center(child: Image.memory(bytes, fit: BoxFit.contain)),
-                  );
-                },
-              );
+              return PhotoPageItem(asset: widget.photos[index]);
             },
           ),
-          if (isHost && isBufferActive)
+          if (isHost && (isBufferActive || showSharedConfirmation))
             Positioned(
               bottom: 40,
               left: 0,
@@ -135,24 +113,33 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                      if (isBufferActive) ...[
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        'Sharing in 2s...',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      const SizedBox(width: 16),
-                      TextButton(
-                        onPressed: () => sessionService.cancelShare(),
-                        child: const Text('Cancel'),
-                      ),
+                        const SizedBox(width: 16),
+                        Text(
+                          'Sharing in ${remainingSeconds}s...',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        const SizedBox(width: 16),
+                        TextButton(
+                          onPressed: () => sessionService.cancelShare(),
+                          child: const Text('Cancel'),
+                        ),
+                      ] else if (showSharedConfirmation) ...[
+                        const Icon(Icons.check, color: Colors.green, size: 20),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Shared',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -160,6 +147,63 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
             ),
         ],
       ),
+    );
+  }
+}
+
+class PhotoPageItem extends StatefulWidget {
+  final AssetEntity asset;
+
+  const PhotoPageItem({super.key, required this.asset});
+
+  @override
+  State<PhotoPageItem> createState() => _PhotoPageItemState();
+}
+
+class _PhotoPageItemState extends State<PhotoPageItem> {
+  late Future<Uint8List?> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = widget.asset.thumbnailDataWithSize(
+      const ThumbnailSize.square(2000),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant PhotoPageItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.asset.id != widget.asset.id) {
+      _future = widget.asset.thumbnailDataWithSize(
+        const ThumbnailSize.square(2000),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List?>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+        final bytes = snapshot.data;
+        if (bytes == null || bytes.isEmpty) {
+          return const Center(
+            child: Text(
+              '이미지를 불러올 수 없습니다',
+              style: TextStyle(color: Colors.white70),
+            ),
+          );
+        }
+        return InteractiveViewer(
+          child: Center(child: Image.memory(bytes, fit: BoxFit.contain)),
+        );
+      },
     );
   }
 }

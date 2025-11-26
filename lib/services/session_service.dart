@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -14,6 +16,8 @@ class SessionService extends ChangeNotifier {
   Session _session;
   Timer? _privacyBufferTimer;
   bool _isBufferActive = false;
+  int _bufferSecondsRemaining = 0;
+  bool _showSharedConfirmation = false;
   PhotoItem? _pendingPhoto;
 
   // Current photo being shown (or last shown)
@@ -21,16 +25,20 @@ class SessionService extends ChangeNotifier {
 
   // Received photo data (for guest)
   Uint8List? _receivedImageData;
+  Uint8List? _pendingReceivedImageData;
+  bool _waitingForShowCommand = false;
 
   SessionService({TransportService? transport, PhotoService? photoService})
-    : _transport = transport ?? NearbyTransportService(),
-      _photoService = photoService ?? PhotoService(),
-      _session = const Session(id: '', hostId: '') {
+      : _transport = transport ?? NearbyTransportService(),
+        _photoService = photoService ?? PhotoService(),
+        _session = const Session(id: '', hostId: '') {
     _initTransport();
   }
 
   Session get session => _session;
   bool get isBufferActive => _isBufferActive;
+  int get bufferSecondsRemaining => _bufferSecondsRemaining;
+  bool get showSharedConfirmation => _showSharedConfirmation;
   PhotoItem? get currentPhoto => _currentPhoto;
   Uint8List? get receivedImageData => _receivedImageData;
 
@@ -68,8 +76,8 @@ class SessionService extends ChangeNotifier {
           final nextState = currentPeers.isNotEmpty
               ? SessionState.connected
               : (_session.isHost
-                    ? SessionState.advertising
-                    : SessionState.discovering);
+                  ? SessionState.advertising
+                  : SessionState.discovering);
           _session = _session.copyWith(peerIds: currentPeers, state: nextState);
           notifyListeners();
           break;
@@ -81,11 +89,43 @@ class SessionService extends ChangeNotifier {
     });
 
     _transport.dataReceived.listen((data) {
-      // Handle received data (photo bytes)
-      // In a real app, we might send metadata first, then chunks.
-      // For simplicity, assuming small enough images or handled by library for now.
-      _receivedImageData = data.data;
-      notifyListeners();
+      try {
+        final String jsonString = utf8.decode(data.data);
+        final Map<String, dynamic> message = jsonDecode(jsonString);
+
+
+        switch (message['type']) {
+          case 'preload':
+             final String base64Image = message['data'];
+             _pendingReceivedImageData = base64Decode(base64Image);
+             
+             // If we already received the show command, display immediately
+             if (_waitingForShowCommand) {
+               _receivedImageData = _pendingReceivedImageData;
+               _pendingReceivedImageData = null;
+               _waitingForShowCommand = false;
+               notifyListeners();
+             }
+             break;
+          case 'show':
+             if (_pendingReceivedImageData != null) {
+               _receivedImageData = _pendingReceivedImageData;
+               _pendingReceivedImageData = null;
+               _waitingForShowCommand = false;
+               notifyListeners();
+             } else {
+               // Data hasn't arrived yet, wait for it
+               _waitingForShowCommand = true;
+             }
+             break;
+          case 'cancel':
+             _pendingReceivedImageData = null;
+             _waitingForShowCommand = false;
+             break;
+        }
+      } catch (e) {
+        // Fallback or ignore
+      }
     });
   }
 
@@ -151,14 +191,26 @@ class SessionService extends ChangeNotifier {
   void selectPhoto(PhotoItem photo) {
     if (!_session.isHost) return;
 
+    _privacyBufferTimer?.cancel();
+
     _pendingPhoto = photo;
     _currentPhoto = photo; // Show locally immediately
     _isBufferActive = true;
+    _showSharedConfirmation = false;
+    _bufferSecondsRemaining = 2;
     notifyListeners();
 
-    _privacyBufferTimer?.cancel();
-    _privacyBufferTimer = Timer(const Duration(seconds: 2), () {
-      _sharePendingPhoto();
+    // Start pre-loading immediately
+    _preloadPhoto(photo);
+
+    _privacyBufferTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _bufferSecondsRemaining--;
+      if (_bufferSecondsRemaining <= 0) {
+        timer.cancel();
+        _confirmShare();
+      } else {
+        notifyListeners();
+      }
     });
   }
 
@@ -166,26 +218,45 @@ class SessionService extends ChangeNotifier {
   void cancelShare() {
     _privacyBufferTimer?.cancel();
     _isBufferActive = false;
+    _showSharedConfirmation = false;
     _pendingPhoto = null;
     notifyListeners();
+
+    final message = jsonEncode({'type': 'cancel'});
+    _transport.broadcastData(utf8.encode(message));
   }
 
-  Future<void> _sharePendingPhoto() async {
-    _isBufferActive = false;
-    notifyListeners();
-
-    if (_pendingPhoto != null) {
-      // Fetch bytes (thumbnail or compressed)
-      // Using a reasonable size for P2P transfer (e.g., 1080p or similar, here using 1000x1000 thumbnail for speed)
-      final bytes = await _photoService.getThumbnail(
-        _pendingPhoto!.id,
-        width: 1080,
-        height: 1920,
-      );
-      if (bytes != null) {
-        await sendImageBytes(bytes);
-      }
+  Future<void> _preloadPhoto(PhotoItem photo) async {
+    // Reduced size for faster P2P transfer (720p is usually sufficient for phone screens)
+    final bytes = await _photoService.getThumbnail(
+      photo.id,
+      width: 720,
+      height: 1280,
+    );
+    if (bytes != null) {
+      final message = jsonEncode({
+        'type': 'preload',
+        'data': base64Encode(bytes),
+      });
+      await _transport.broadcastData(utf8.encode(message));
     }
+  }
+
+  Future<void> _confirmShare() async {
+    _isBufferActive = false;
+    _showSharedConfirmation = true;
+    notifyListeners();
+    
+    // Hide "Shared" confirmation after 1 second
+    Future.delayed(const Duration(seconds: 1), () {
+      if (_showSharedConfirmation) {
+        _showSharedConfirmation = false;
+        notifyListeners();
+      }
+    });
+
+    final message = jsonEncode({'type': 'show'});
+    await _transport.broadcastData(utf8.encode(message));
   }
 
   // Method to actually send data (called after buffer)
