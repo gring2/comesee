@@ -223,7 +223,7 @@ class _PhotoAccessPageState extends State<PhotoAccessPage> {
     final showLimitedNotice = _status == PhotosPermissionStatus.limited;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Offline Photo Share'),
+        title: const Text('ComeSee', style: TextStyle(fontWeight: FontWeight.w600)),
         actions: [
           IconButton(
             onPressed: _checkAndLoad,

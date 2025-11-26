@@ -12,11 +12,14 @@ class GuestSessionScreen extends StatelessWidget {
     final session = sessionService.session;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFFF8F0),
       appBar: AppBar(
-        title: const Text('Guest Session'),
+        title: const Text('Join Session', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: const Color(0xFFFFF8F0),
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.close),
+            icon: const Icon(Icons.close_rounded),
             onPressed: () {
               sessionService.stopSession();
               Navigator.of(context).pop();
@@ -28,20 +31,41 @@ class GuestSessionScreen extends StatelessWidget {
         children: [
           // Status Bar
           Container(
-            padding: const EdgeInsets.all(8),
-            color: Colors.grey[200],
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: session.state == SessionState.connected
+                  ? Colors.green.shade50
+                  : Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: session.state == SessionState.connected
+                    ? Colors.green.shade200
+                    : Colors.orange.shade200,
+              ),
+            ),
             child: Row(
               children: [
                 Icon(
                   session.state == SessionState.connected
-                      ? Icons.link
-                      : Icons.link_off,
+                      ? Icons.check_circle_rounded
+                      : Icons.wifi_find_rounded,
                   color: session.state == SessionState.connected
-                      ? Colors.green
-                      : Colors.grey,
+                      ? Colors.green.shade700
+                      : Colors.orange.shade700,
                 ),
-                const SizedBox(width: 8),
-                Text('Status: ${session.state.name}'),
+                const SizedBox(width: 12),
+                Text(
+                  session.state == SessionState.connected
+                      ? 'Connected!'
+                      : 'Looking for friends...',
+                  style: TextStyle(
+                    color: session.state == SessionState.connected
+                        ? Colors.green.shade900
+                        : Colors.orange.shade900,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -49,39 +73,106 @@ class GuestSessionScreen extends StatelessWidget {
           // Discovery List (if not connected)
           if (session.state == SessionState.discovering || session.state == SessionState.connecting)
             Expanded(
-              child: ListView.builder(
-                itemCount: sessionService.discoveredDevices.length,
-                itemBuilder: (context, index) {
-                  final device = sessionService.discoveredDevices[index];
-                  return ListTile(
-                    title: Text(device.name),
-                    subtitle: Text(device.id),
-                    trailing: ElevatedButton(
-                      onPressed: () => sessionService.joinSession(device.id),
-                      child: const Text('Join'),
+              child: sessionService.discoveredDevices.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_rounded, size: 64, color: Colors.grey.shade400),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Searching for nearby sessions...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: sessionService.discoveredDevices.length,
+                      itemBuilder: (context, index) {
+                        final device = sessionService.discoveredDevices[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            leading: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.person_rounded, color: Colors.orange.shade700),
+                            ),
+                            title: Text(
+                              device.name,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              device.id,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            trailing: FilledButton(
+                              onPressed: () => sessionService.joinSession(device.id),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.orange.shade600,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text('Join'),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
 
           // Photo View (if connected)
           if (session.state == SessionState.connected)
             Expanded(
-              child: Center(
-                child: sessionService.receivedImageData != null
-                    ? Image.memory(
-                        sessionService.receivedImageData!,
-                        fit: BoxFit.contain,
-                      )
-                    : const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Waiting for photos...'),
-                        ],
-                      ),
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Center(
+                  child: sessionService.receivedImageData != null
+                      ? Image.memory(
+                          sessionService.receivedImageData!,
+                          fit: BoxFit.contain,
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(color: Colors.orange.shade600),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Waiting for photos...',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                ),
               ),
             ),
         ],

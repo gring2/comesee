@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         title: 'ComeSee',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
           useMaterial3: true,
         ),
         home: const HomeScreen(),

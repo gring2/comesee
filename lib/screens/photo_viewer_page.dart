@@ -106,20 +106,20 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.black87,
+                    color: Colors.orange.shade900.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white24),
+                    border: Border.all(color: Colors.orange.shade300),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (isBufferActive) ...[
-                        const SizedBox(
+                        SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: Colors.orange.shade200,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -133,7 +133,7 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                           child: const Text('Cancel'),
                         ),
                       ] else if (showSharedConfirmation) ...[
-                        const Icon(Icons.check, color: Colors.green, size: 20),
+                        Icon(Icons.check_circle_rounded, color: Colors.green.shade300, size: 20),
                         const SizedBox(width: 8),
                         const Text(
                           'Shared',
