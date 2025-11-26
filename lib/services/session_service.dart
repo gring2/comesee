@@ -19,6 +19,7 @@ class SessionService extends ChangeNotifier {
   int _bufferSecondsRemaining = 0;
   bool _showSharedConfirmation = false;
   PhotoItem? _pendingPhoto;
+  PhotoItem? _lastSharedPhoto;
 
   // Current photo being shown (or last shown)
   PhotoItem? _currentPhoto;
@@ -69,6 +70,16 @@ class SessionService extends ChangeNotifier {
             state: SessionState.connected,
           );
           notifyListeners();
+          
+          // Sync photos to new peer
+          if (_session.isHost) {
+            if (_lastSharedPhoto != null) {
+              _syncPhotoToPeer(change.deviceId, _lastSharedPhoto!, show: true);
+            }
+            if (_isBufferActive && _currentPhoto != null && _currentPhoto != _lastSharedPhoto) {
+              _syncPhotoToPeer(change.deviceId, _currentPhoto!, show: false);
+            }
+          }
           break;
         case ConnectionStatus.disconnected:
           final currentPeers = List<String>.from(_session.peerIds);
@@ -245,6 +256,7 @@ class SessionService extends ChangeNotifier {
   Future<void> _confirmShare() async {
     _isBufferActive = false;
     _showSharedConfirmation = true;
+    _lastSharedPhoto = _currentPhoto;
     notifyListeners();
     
     // Hide "Shared" confirmation after 1 second
@@ -257,6 +269,26 @@ class SessionService extends ChangeNotifier {
 
     final message = jsonEncode({'type': 'show'});
     await _transport.broadcastData(utf8.encode(message));
+  }
+
+  Future<void> _syncPhotoToPeer(String peerId, PhotoItem photo, {required bool show}) async {
+    final bytes = await _photoService.getThumbnail(
+      photo.id,
+      width: 720,
+      height: 1280,
+    );
+    if (bytes != null) {
+      final preloadMsg = jsonEncode({
+        'type': 'preload',
+        'data': base64Encode(bytes),
+      });
+      await _transport.sendData(peerId, utf8.encode(preloadMsg));
+      
+      if (show) {
+        final showMsg = jsonEncode({'type': 'show'});
+        await _transport.sendData(peerId, utf8.encode(showMsg));
+      }
+    }
   }
 
   // Method to actually send data (called after buffer)
