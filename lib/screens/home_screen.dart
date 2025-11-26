@@ -11,7 +11,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Offline Photo Share'),
+        title: const Text('ComeSee'),
       ),
       body: Center(
         child: Column(
