@@ -25,13 +25,13 @@ class HomeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: Colors.deepPurple.shade50,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.photo_camera_outlined,
                   size: 80,
-                  color: Colors.orange.shade700,
+                  color: Colors.deepPurple.shade700,
                 ),
               ),
               const SizedBox(height: 32),
@@ -68,7 +68,7 @@ class HomeScreen extends StatelessWidget {
                   icon: const Icon(Icons.photo_library_rounded),
                   label: const Text('Share My Photos'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.orange.shade600,
+                    backgroundColor: Colors.deepPurple.shade600,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
@@ -93,8 +93,8 @@ class HomeScreen extends StatelessWidget {
                   icon: const Icon(Icons.people_outline_rounded),
                   label: const Text('Join a Friend'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.orange.shade700,
-                    side: BorderSide(color: Colors.orange.shade300, width: 2),
+                    foregroundColor: Colors.deepPurple.shade700,
+                    side: BorderSide(color: Colors.deepPurple.shade300, width: 2),
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     shape: RoundedRectangleBorder(

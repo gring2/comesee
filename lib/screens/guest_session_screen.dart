@@ -36,12 +36,12 @@ class GuestSessionScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: session.state == SessionState.connected
                   ? Colors.green.shade50
-                  : Colors.orange.shade50,
+                  : Colors.deepPurple.shade50,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: session.state == SessionState.connected
                     ? Colors.green.shade200
-                    : Colors.orange.shade200,
+                    : Colors.deepPurple.shade200,
               ),
             ),
             child: Row(
@@ -52,7 +52,7 @@ class GuestSessionScreen extends StatelessWidget {
                       : Icons.wifi_find_rounded,
                   color: session.state == SessionState.connected
                       ? Colors.green.shade700
-                      : Colors.orange.shade700,
+                      : Colors.deepPurple.shade700,
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -61,8 +61,8 @@ class GuestSessionScreen extends StatelessWidget {
                       : 'Looking for friends...',
                   style: TextStyle(
                     color: session.state == SessionState.connected
-                        ? Colors.green.shade900
-                        : Colors.orange.shade900,
+                        ? Colors.deepPurple.shade900
+                        : Colors.deepPurple.shade900,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -113,10 +113,10 @@ class GuestSessionScreen extends StatelessWidget {
                             leading: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.orange.shade50,
+                                color: Colors.deepPurple.shade50,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(Icons.person_rounded, color: Colors.orange.shade700),
+                              child: Icon(Icons.person_rounded, color: Colors.deepPurple.shade700),
                             ),
                             title: Text(
                               device.name,
@@ -132,7 +132,7 @@ class GuestSessionScreen extends StatelessWidget {
                             trailing: FilledButton(
                               onPressed: () => sessionService.joinSession(device.id),
                               style: FilledButton.styleFrom(
-                                backgroundColor: Colors.orange.shade600,
+                                backgroundColor: Colors.deepPurple.shade600,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -164,7 +164,7 @@ class GuestSessionScreen extends StatelessWidget {
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircularProgressIndicator(color: Colors.orange.shade600),
+                            CircularProgressIndicator(color: Colors.deepPurple.shade600),
                             const SizedBox(height: 16),
                             const Text(
                               'Waiting for photos...',

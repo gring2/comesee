@@ -106,9 +106,9 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade900.withOpacity(0.95),
+                    color: Colors.deepPurple.shade900.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.orange.shade300),
+                    border: Border.all(color: Colors.deepPurple.shade300),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -119,7 +119,7 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.orange.shade200,
+                            color: Colors.deepPurple.shade200,
                           ),
                         ),
                         const SizedBox(width: 16),
