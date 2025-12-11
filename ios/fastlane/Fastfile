@@ -1,0 +1,82 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Generate new localized screenshots"
+  lane :screenshots do
+    capture_screenshots(workspace: "Runner.xcworkspace", scheme: "Runner")
+    upload_to_app_store(skip_binary_upload: true, skip_metadata: true)
+  end
+    desc "iOS build"
+    lane :build_release do
+        match(type: "appstore") # match의 Adhoc 프로비저닝 프로파일을 가져옴
+        clear_derived_data
+        clean_build_artifacts  # 이전 빌드 아티팩트를 정리 (클린 빌드)
+        gym(export_options:{ installerSigningCertificate: "iOS Distribution" })
+
+    end
+    desc "Release"
+    lane :release do
+      deliver(
+    	# 메타데이터와 빌드파일을 업로드 후 자동으로 제출 유무
+   	    submit_for_review: false,
+
+    	# 자동으로 출시 여부에 대한 옵션입니
+    	automatic_release: false,
+
+    	# 만약 메타 데이터만 itunesConnect에 업로드하고싶다면, 아래의 옵션을 true로 두어 .ipa 파일이 업로드 되지 않도록 합니다.
+        skip_binary_upload: false,
+
+    	# 메타데이터의 filePath를 입력
+   	    metadata_path: "./metadata",
+
+        # 자동 릴리즈하는 옵션
+        automatic_release: true,
+
+    	# itunesConnect에서 스크린샷을 올렸다면 자동으로 fastlane deliver download_metadata 을 실행했을 때 디렉토리가 자동으로 생상되어 굳이 작성할 필요가 없습니다.
+    	# 만약 앱스토어용 스크린샷을 메타파일에서 폴더를 따로 생성해서 자동으로 인지하지 못하는 디렉토리에 있다면 filePath를 적어줍니다.
+        # screenshots_path:  "../snapshots",
+        skip_screenshot: true,
+    	# 앱 버전을 생성하거나 수정합니다.
+    	app_version: "1.0.0",
+    	skip_app_version_update: false,
+
+    	# 메타 데이터를 업로드 하지 않는가에 대한 옵션입니다. 스크린샷은 메타데이터와 별개로 업로드 됩니다.
+    	skip_metadata: true,
+
+    	# 심사 시, IDFA(애플 광고 식별자)에 대한 정보입니다.
+       	submission_information: {
+     	  add_id_info_limits_tracking: true,
+     	  add_id_info_serves_ads: true,
+         	  add_id_info_tracks_action: true,
+         	  add_id_info_tracks_install: true,
+     	  add_id_info_uses_idfa: true,
+     	  content_rights_has_rights: true,
+     	  content_rights_contains_third_party_content: true,
+         	  export_compliance_platform: 'ios',
+     	  export_compliance_compliance_required: false,
+     	  export_compliance_encryption_updated: false,
+         	  export_compliance_app_type: nil,
+     	  export_compliance_uses_encryption: false,
+         	  export_compliance_is_exempt: false,
+         	  export_compliance_contains_third_party_cryptography: false,
+     	  export_compliance_contains_proprietary_cryptography: false,
+         	  export_compliance_available_on_french_store: false
+      	 }
+    )
+    end
+end
